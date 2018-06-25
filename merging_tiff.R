@@ -90,29 +90,41 @@ merge.multiple.z <- function(row.number, col.number, path.to.photos,
   
 save.separate.well <- function(row.number, col.number, path.to.photos, z.range, 
                                active.input, no.cores, path.to.mapplate, path.to.save,
-                               file.pattern){
+                               file.pattern, channel){
   
-  well.list <- which.wells(paste(path.to.mapplate, "fish_active.csv", sep=''), 
+  well.list <- which.wells(paste(path.to.mapplate, "args_active.csv", sep=''), 
                            paste(path.to.mapplate, "args_id.csv", sep=''))
   
   for(i in 1:length(well.list)){
     lista <- merge.multiple.z(row.number=row.number, col.number=col.number, 
                               path.to.photos=path.to.photos, z.range=z.range, 
                               subs.well = i, file.pattern = file.pattern)
-    if(!dir.exists(paste(path.to.save, '/', well.list[[i]], sep=''))){
-      dir.create(paste(path.to.save, '/', well.list[[i]], sep=''))
+    if(!dir.exists(paste(path.to.save, "/Well ", well.list[[i]], sep=''))){
+      dir.create(paste(path.to.save, "/Well ", well.list[[i]], sep=''))
     }
-    writeTIFFDefault(lista, paste(path.to.save, '/', well.list[[i]], '/', 
-                                  z.range[1], '-', tail(z.range, n=1) ,"_Z-stack_fish.tif", sep=''))
+    writeTIFFDefault(lista, paste(path.to.save, "/Well ", well.list[[i]], '/', 
+                                  channel, 
+                                  z.range[1], '-', tail(z.range, n=1) , 
+                                  "_Z-stack_fish.tif", sep=''))
   }
 }
 
 
 
-path.to.photos <- "L:/FISH/KZ_17.05.2018/D4-G4_photos/"
-path.to.mapplate <- "L:/FISH/mapplate_D4-G4/"
+path.to.photos <- "//zmifp-nas1/Experiments/kzakrzew/RNA FISH/07.06.18/"
+path.to.mapplate <- "//zmifp-nas1/Experiments/Pathway/m.komorowski/karolina/mapplates/2018-06-07-KZ-FISH02/metadata/"
 normalizeMetadata(metadata_path = path.to.mapplate)
-path.to.save <- "Y:/PiotrT/FISH"
+path.to.save <- "//zmifp-nas1/Experiments/kzakrzew/RNA FISH/07.06.18/merged"
+
+save.separate.well(row.number = 10,
+                   col.number = 10,
+                   path.to.photos = path.to.photos,
+                   path.to.mapplate = path.to.mapplate,
+                   path.to.save = path.to.save,
+                   z.range = (0:9),
+                   no.cores = 1,
+                   channel = "A546_",
+                   file.pattern = "Mark_and_Find_002_Pos4\\d{2}_S001_z%02d_ch00.tif")
 
 save.separate.well(row.number = 10,
                    col.number = 10,
@@ -120,4 +132,30 @@ save.separate.well(row.number = 10,
                    path.to.mapplate = path.to.mapplate,
                    path.to.save = path.to.save,
                    z.range = (10:19),
-                   no.cores = 20)
+                   no.cores = 1,
+                   channel = "A546_",
+                   file.pattern = "Mark_and_Find_002_Pos4\\d{2}_S001_z%02d_ch00.tif")
+
+save.separate.well(row.number = 10,
+                   col.number = 10,
+                   path.to.photos = path.to.photos,
+                   path.to.mapplate = path.to.mapplate,
+                   path.to.save = path.to.save,
+                   z.range = (0:9),
+                   no.cores = 1,
+                   channel = "DAPI_",
+                   file.pattern = "Mark_and_Find_002_Pos4\\d{2}_S001_z%02d_ch01.tif")
+
+save.separate.well(row.number = 10,
+                   col.number = 10,
+                   path.to.photos = path.to.photos,
+                   path.to.mapplate = path.to.mapplate,
+                   path.to.save = path.to.save,
+                   z.range = (10:19),
+                   no.cores = 1,
+                   channel = "DAPI_",
+                   file.pattern = "Mark_and_Find_002_Pos4\\d{2}_S001_z%02d_ch01.tif")
+
+
+
+
