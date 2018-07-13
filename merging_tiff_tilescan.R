@@ -135,8 +135,4 @@ save.separate.well(row.number = 10,
                    file.pattern = file.pattern,
                    channel="A546")
 
-# if(reverse==0){ 
-#   matrix.biggest <- cbind(matrix.biggest, matrix.big)
-# } else if(reverse==1)
-
 
