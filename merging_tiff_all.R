@@ -180,6 +180,7 @@ save.separate.well <- function(row.number, col.number, path.to.photos, z.range,
 
 path.to.photos <- "//zmifp-nas1/Experiments/Pathway/RNA FISH/Experiments/KZ-FISH05-2018-07-11/"
 path.to.mapplate <- "//zmifp-nas1/Experiments/Pathway/RNA FISH/karolina/platemap/2018-07-11-KZ-FISH05/metadata/"
+path.to.mapplate <- "//zmifp-nas1/Experiments/Pathway/RNA FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/"
 normalizeMetadata(metadata_path = path.to.mapplate)
 path.to.save <- "//zmifp-nas1/Experiments/Pathway/RNA FISH/karolina/merged/KZ-FISH05-merged"
 

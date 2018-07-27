@@ -1,19 +1,45 @@
+#### Script for preparing MAF files for LEICA AF6000 plate scanning #### 
+#### loading packages ####
+packages.list <- list("foreach", "doParallel")
+sapply(packages.list, require, character.only = TRUE)
 
-#### preparing names for wells ####
+#### function for preparing names for wells ####
 
-which.active <- function(file.path){
-  mapplate <- read.csv(file.path, header = FALSE, sep=',')
-  yes <- data.frame()
-  for(i in 1:length(mapplate[, 1])){
-    for(j in 1:length(mapplate[1, ])){
-      if(mapplate[i, ][j] == 1){
-        yes <- rbind(yes, data.frame(row=i, column=j))
+normalizeMetadata <- function(metadata_path, 
+                              delimeter = ","){
+  csv.list <- list.files(path = metadata_path, pattern = ".csv", recursive = TRUE, full.names = TRUE)
+  
+  for(csv in csv.list){
+    line <- readLines(csv, n = 1)
+    if(grepl("\t", line)){
+      csv.data <- read.table(file = csv, header = FALSE, sep = "\t")
+    } else if(grepl(",", line)){
+      csv.data <- read.table(file = csv, header = FALSE, sep = ",")
+    } else if(grepl(";", line)){
+      csv.data <- read.table(file = csv, header = FALSE, sep = ";")
+    } else {
+      csv.data <- read.table(file = csv, header = FALSE, sep = " ")
+    }
+    write.table(csv.data, file = csv, sep = delimeter, row.names = FALSE, col.names = FALSE)
+  }
+}
+
+which.coor <- function(file.path.active, file.path.middle, file.path.z){
+  
+  which.active <- function(file.path){
+    mapplate <- read.csv(file.path, header = FALSE, sep=',')
+    yes <- data.frame()
+    for(i in 1:length(mapplate[, 1])){
+      for(j in 1:length(mapplate[1, ])){
+        if(mapplate[i, ][j] == 1){
+          yes <- rbind(yes, data.frame(row=i, column=j))
+        }
       }
     }
+    return(yes)
   }
-  return(yes)
-}
-which.coor <- function(file.path.active, file.path.middle, file.path.z){
+  
+  
   
   yes <- which.active(file.path.active)
   middle <- read.csv(file.path.middle, header = FALSE, sep=',')
@@ -34,7 +60,7 @@ which.coor <- function(file.path.active, file.path.middle, file.path.z){
   return(all.wells)
 }
 
-#### koncowa funkcja ####
+#### final function forpreparing the file ####
 prepare.maf.file.middle <- function(path.input, path.output, 
                              all.wells, x.grid, y.grid, 
                              dif.x, dif.y, afc){
@@ -113,20 +139,20 @@ prepare.maf.file.middle <- function(path.input, path.output,
 
 #### file making ####
 path.to.platemap <- 
-  "/Users/piotrt/Documents/IPPT_PT/FISH/KZ-FISH02-2018-06-07/platemap/"
+  "//148.81.53.180/Experiments/Pathway/RNA_FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/"
 path.output <- 
-  "/Users/piotrt/Documents/IPPT_PT/FISH/KZ-FISH02-2018-06-07/platemap/07062018.maf"
-dif.x <- 0.00011405
-dif.y <- 0.00011220
+  "//148.81.53.180/Experiments/Pathway/RNA_FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/13072018_test.maf"
+dif.x <- 0.00011405 #has to be those exact values
+dif.y <- 0.00011220 #has to be those exact values
 afc <- 0
 
-normalizeMetadata(metadata_path = path.to.mapplate)
-active.wells <- which.coor(paste(path.to.platemap, "fish_active.csv", sep=''),
+normalizeMetadata(metadata_path = path.to.platemap)
+active.wells <- which.coor(paste(path.to.platemap, "args_active.csv", sep=''),
                            paste(path.to.platemap, "plate_middle.csv", sep=''),
                            paste(path.to.platemap, "fish_z.csv", sep=''))
 
 
-prepare.maf.file.middle(path.input = path, 
+prepare.maf.file.middle(path.input = path.to.platemap, 
                         path.output = path.output, 
                         all.wells = active.wells, 
                         x.grid=10, y.grid=10, 
