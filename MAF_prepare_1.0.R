@@ -7,7 +7,8 @@ sapply(packages.list, require, character.only = TRUE)
 
 normalizeMetadata <- function(metadata_path, 
                               delimeter = ","){
-  csv.list <- list.files(path = metadata_path, pattern = ".csv", recursive = TRUE, full.names = TRUE)
+  csv.list <- list.files(path = metadata_path, pattern = ".csv", 
+                         recursive = TRUE, full.names = TRUE)
   
   for(csv in csv.list){
     line <- readLines(csv, n = 1)
@@ -20,7 +21,11 @@ normalizeMetadata <- function(metadata_path,
     } else {
       csv.data <- read.table(file = csv, header = FALSE, sep = " ")
     }
-    write.table(csv.data, file = csv, sep = delimeter, row.names = FALSE, col.names = FALSE)
+    write.table(csv.data, 
+                file = csv, 
+                sep = delimeter, 
+                row.names = FALSE, 
+                col.names = FALSE)
   }
 }
 
@@ -138,12 +143,20 @@ prepare.maf.file.middle <- function(path.input, path.output,
 }
 
 #### file making ####
-path.to.platemap <- 
+# for iOS:
+
+path.to.platemap <-
   "//148.81.53.180/Experiments/Pathway/RNA_FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/"
-path.output <- 
+path.output <-
   "//148.81.53.180/Experiments/Pathway/RNA_FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/13072018_test.maf"
-dif.x <- 0.00011405 #has to be those exact values
-dif.y <- 0.00011220 #has to be those exact values
+
+# path.to.platemap <- 
+#   "//148.81.53.180/Experiments/Pathway/RNA_FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/"
+# path.output <- 
+#   "//148.81.53.180/Experiments/Pathway/RNA_FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/13072018_test.maf"
+
+dif.x <- 0.00011405 #has to be this exact value
+dif.y <- 0.00011220 #has to be this exact value
 afc <- 0
 
 normalizeMetadata(metadata_path = path.to.platemap)
@@ -155,8 +168,8 @@ active.wells <- which.coor(paste(path.to.platemap, "args_active.csv", sep=''),
 prepare.maf.file.middle(path.input = path.to.platemap, 
                         path.output = path.output, 
                         all.wells = active.wells, 
-                        x.grid=10, y.grid=10, 
-                        dif.x=dif.x,
-                        dif.y=dif.y,
-                        afc=afc)
+                        x.grid = 10, y.grid = 10, 
+                        dif.x = dif.x,
+                        dif.y = dif.y,
+                        afc = afc)
 
