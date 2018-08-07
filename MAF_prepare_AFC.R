@@ -68,7 +68,7 @@ which.coor <- function(file.path.active, file.path.middle, file.path.z){
 #### final function forpreparing the file ####
 prepare.maf.file.middle <- function(path.input, path.output, 
                              all.wells, x.grid, y.grid, 
-                             dif.x, dif.y, afc){
+                             dif.x, dif.y, afc, second.line.file){
   
   calculate.coordinates.one <- function(PosX, PosY, x, y, dif.x, dif.y, z){
     
@@ -113,16 +113,18 @@ prepare.maf.file.middle <- function(path.input, path.output,
                                  line=second.line, 
                                  afc){
     list.of.positions <- foreach(row = iter(calculated, by='row')) %do% {
+      afc <- afc + 50
       sprintf(line, 
               row$PositionX, 
               row$PositionY, 
               paste("Position", row$frame, sep=''), 
               row$frame, afc, row$z)
+      
     }
     return(paste(unlist(list.of.positions), collapse=''))
   }
   
-  second.line <- readLines(paste(path.input, "maf_line_second.txt", sep=''))
+  second.line <- readLines(paste(path.input, second.line.file, sep=''))
   
   first.line <- paste(readLines(paste(path.input, 
                                       "maf_line_first.txt", 
@@ -142,7 +144,7 @@ prepare.maf.file.middle <- function(path.input, path.output,
                    sep='\n'), path.output)
 }
 
-#### file making ####
+#### preparing variables ####
 # for iOS:
 
 # path.to.platemap <-
@@ -150,26 +152,48 @@ prepare.maf.file.middle <- function(path.input, path.output,
 # path.output <-
 #   "//148.81.53.180/Experiments/Pathway/RNA_FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/13072018_test.maf"
 
-path.to.platemap <-
-  "//148.81.53.180/Experiments/Pathway/RNA_FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/"
-path.output <-
-  "//148.81.53.180/Experiments/Pathway/RNA_FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/13072018_test.maf"
+# path.to.platemap <-
+#   "//148.81.53.180/Experiments/Pathway/RNA_FISH/piotrek/platemap/2018-07-31-PT-AFC/metadata/"
+# path.output <- paste(path.to.platemap, file.name, sep='')
+  # "//148.81.53.180/Experiments/Pathway/RNA_FISH/piotrek/platemap/2018-07-31-PT-AFC/metadata/afc=1000.maf"
 
-dif.x <- 0.00011405 #has to be this exact value
-dif.y <- 0.00011220 #has to be this exact value
-afc <- 0
+
+path.to.platemap <-
+  "//148.81.53.180/Experiments/Pathway/RNA_FISH/piotrek/platemap/2018-07-31-PT-AFC/metadata/"
+
+
+#### running ####
+objective <- "100x"
 
 normalizeMetadata(metadata_path = path.to.platemap)
-active.wells <- which.coor(paste(path.to.platemap, "args_active.csv", sep=''),
+active.wells <- which.coor(paste(path.to.platemap, "args_active_", objective, ".csv", sep=''),
                            paste(path.to.platemap, "plate_middle.csv", sep=''),
                            paste(path.to.platemap, "fish_z.csv", sep=''))
 
+if(objective=="20x"){
+  afc.list <- list(0, 10887)
+  dif.x <- 0.00061405
+  dif.y <- 0.00040220
+} else { 
+  # afc.list <- list(0, 20887)
+  afc.list <- seq(0888, 03088, 50)
+  # dif.x <- 0.00011405
+  # dif.y <- 0.00011220
+  dif.x <- 0
+  dif.y <- 0
+  }
 
-prepare.maf.file.middle(path.input = path.to.platemap, 
-                        path.output = path.output, 
-                        all.wells = active.wells, 
-                        x.grid = 10, y.grid = 10, 
-                        dif.x = dif.x,
-                        dif.y = dif.y,
-                        afc = afc)
 
+for(afc in afc.list){
+  file.name <- paste("same_2x2_", objective, "_", afc, ".maf", sep='')
+  path.output <- paste(path.to.platemap, "same_not_ideal_0/", file.name, sep='')
+  prepare.maf.file.middle(path.input = path.to.platemap,
+                          second.line.file="maf_line_second.txt",
+                          path.output = path.output,
+                          all.wells = active.wells,
+                          x.grid = 1, y.grid = 1,
+                          dif.x = dif.x,
+                          dif.y = dif.y,
+                          afc = afc)
+
+}
