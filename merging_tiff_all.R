@@ -4,7 +4,27 @@
 packages.list <- list("tiff", "foreach", "doParallel")
 sapply(packages.list, require, character.only = TRUE)
 
-#### loading functions ####
+#### previous functions ####
+normalizeMetadata <- function(metadata_path, 
+                              delimeter = ","){
+  csv.list <- list.files(path = metadata_path, pattern = ".csv", recursive = TRUE, full.names = TRUE)
+  
+  for(csv in csv.list){
+    line <- readLines(csv, n = 1)
+    if(grepl("\t", line)){
+      csv.data <- read.table(file = csv, header = FALSE, sep = "\t")
+    } else if(grepl(",", line)){
+      csv.data <- read.table(file = csv, header = FALSE, sep = ",")
+    } else if(grepl(";", line)){
+      csv.data <- read.table(file = csv, header = FALSE, sep = ";")
+    } else {
+      csv.data <- read.table(file = csv, header = FALSE, sep = " ")
+    }
+    write.table(csv.data, file = csv, sep = delimeter, row.names = FALSE, col.names = FALSE)
+  }
+}
+
+
 which.wells <- function(file.path.active, file.path.wells){
   
   which.active <- function(file.path){
@@ -178,19 +198,26 @@ save.separate.well <- function(row.number, col.number, path.to.photos, z.range,
 
 #### preparing merged photos ####
 
-path.to.photos <- "//zmifp-nas1/Experiments/Pathway/RNA FISH/Experiments/KZ-FISH05-2018-07-11/"
-path.to.mapplate <- "//zmifp-nas1/Experiments/Pathway/RNA FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/"
+
+# ### debugging ####
+# path.to.save <- "//zmifp-nas1/Experiments/Pathway/RNA FISH/karolina/merged/KZ-FISH03-merged/Well F03"
+# list.files(path = path.to.save,
+#            pattern = paste("MAX_DAPI.*_Z-stack_fish.tif", sep=''))
+
+path.to.photos <- "Z:/Pathway/RNA FISH/Experiments/KZ-FISH05-2018-07-11/"
+path.to.mapplate <- "Z:/Pathway/RNA FISH/karolina/platemap/2018-07-11-KZ-FISH05/metadata/"
 normalizeMetadata(metadata_path = path.to.mapplate)
-path.to.save <- "//zmifp-nas1/Experiments/Pathway/RNA FISH/karolina/merged/KZ-FISH05-merged"
+path.to.save <- "E:/EXPERIMENTS/RNA-FISH_merged/KZ-FISH05-merged"
 
 # type the list of dye used:
-channel.list <- list("A546_"="01", "DAPI_"="00")
+channel.list <- list("A488_"="02","A546_"="01", "DAPI_"="00")
 
 for(channel.tmp in names(channel.list)){
   pattern.channel <- paste("Mark_and_Find_003_Pos\\d{%d}_S001_z%02d_ch",
                            channel.list[[channel.tmp]],
                            ".tif",
                            sep='')
+  
   ## type the list of z combinations:
   for(z in list((0:9), (10:19))){
     save.separate.well(row.number = 10,
@@ -203,26 +230,25 @@ for(channel.tmp in names(channel.list)){
                        channel = channel.tmp,
                        file.pattern = pattern.channel,
                        to.projection = 1)
-    
+
   }
-  well.list <- which.wells(paste(path.to.mapplate, "args_active.csv", sep=''), 
+  well.list <- which.wells(paste(path.to.mapplate, "args_active.csv", sep=''),
                            paste(path.to.mapplate, "args_id.csv", sep=''))
-  
+
   foreach(folder=well.list) %do% {
+    file.remove(list.files(paste(path.to.save, "/Well ", folder, sep=""),
+               pattern = paste("MAX_", channel.tmp,"0-19_Z-stack_fish.tif", sep=''), full.names = 1))
+
     write.collapsed(path.input = paste(path.to.save, "/Well ", folder, sep=""),
                     exp.pattern = paste("MAX_", channel.tmp,".*_Z-stack_fish.tif", sep=''),
                     collapsing='max',
-                    path.output = paste(path.to.photos, folder, sep="/"),
-                    filename = paste("MAX_", 
+                    path.output = paste(path.to.save, "/Well ", folder, sep=""),
+                    filename = paste("MAX_",
                                      channel.tmp,
-                                     "_all_stack_fish.tif"))
+                                     "0-19_Z-stack_fish.tif",
+                                     sep=''))
+    file.remove(list.files(paste(path.to.save, "/Well ", folder, sep=""),
+                           pattern = paste("MAX_", channel.tmp,"(0-9|10-19)_Z-stack_fish.tif", sep=''), full.names=1))
   }
   
 }
-
-
-# ### debugging ####
-# path.to.save <- "//zmifp-nas1/Experiments/Pathway/RNA FISH/karolina/merged/KZ-FISH03-merged/Well F03"
-# list.files(path = path.to.save,
-#            pattern = paste("MAX_DAPI.*_Z-stack_fish.tif", sep=''))
-
