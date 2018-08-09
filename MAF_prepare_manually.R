@@ -1,9 +1,12 @@
 #### Script for preparing MAF files for LEICA AF6000 plate scanning #### 
+## author: PT ##
+
 #### loading packages ####
 packages.list <- list("foreach", "doParallel")
 sapply(packages.list, require, character.only = TRUE)
 
-#### function for preparing names for wells ####
+#### loading functions ####
+## function for preparing names for wells ##
 
 normalizeMetadata <- function(metadata_path, 
                               delimeter = ","){
@@ -65,10 +68,16 @@ which.coor <- function(file.path.active, file.path.middle, file.path.z){
   return(all.wells)
 }
 
-#### final function forpreparing the file ####
+## final function for preparing the file ##
 prepare.maf.file.middle <- function(path.input, path.output, 
-                             all.wells, x.grid, y.grid, 
+                             all.wells= NA, x.grid, y.grid, 
                              dif.x, dif.y, afc){
+  if(is.na(all.wells)){
+    all.wells <- which.coor(paste(path.input, "args_active.csv", sep=''),
+                               paste(path.input, "plate_middle.csv", sep=''),
+                               paste(path.input, "fish_z.csv", sep=''))
+  }
+  
   
   calculate.coordinates.one <- function(PosX, PosY, x, y, dif.x, dif.y, z){
     
@@ -143,31 +152,23 @@ prepare.maf.file.middle <- function(path.input, path.output,
 }
 
 #### file making ####
-# for iOS:
-
-# path.to.platemap <-
-#   "//148.81.53.180/Experiments/Pathway/RNA_FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/"
-# path.output <-
-#   "//148.81.53.180/Experiments/Pathway/RNA_FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/13072018_test.maf"
 
 path.to.platemap <-
-  "//148.81.53.180/Experiments/Pathway/RNA_FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/"
-path.output <-
-  "//148.81.53.180/Experiments/Pathway/RNA_FISH/karolina/platemap/2018-07-13-KZ-FISH06/metadata/13072018_test.maf"
+  "//148.81.53.180/Experiments/Pathway/RNA_FISH/piotrek/platemap/2018-08-07-PT-FISH02/metadata/"
 
-dif.x <- 0.00011405 #has to be this exact value
-dif.y <- 0.00011220 #has to be this exact value
+# has to be path + filename.maf:
+path.output <-
+  "//148.81.53.180/Experiments/Pathway/RNA_FISH/piotrek/platemap/2018-08-07-PT-FISH02/metadata/tesowanie_zmian.maf"
+
+dif.x <- 0.00011405 #has to be this exact value for 100x objective
+dif.y <- 0.00011220 #has to be this exact value for 100x objective
 afc <- 0
 
-normalizeMetadata(metadata_path = path.to.platemap)
-active.wells <- which.coor(paste(path.to.platemap, "args_active.csv", sep=''),
-                           paste(path.to.platemap, "plate_middle.csv", sep=''),
-                           paste(path.to.platemap, "fish_z.csv", sep=''))
 
+normalizeMetadata(metadata_path = path.to.platemap)
 
 prepare.maf.file.middle(path.input = path.to.platemap, 
-                        path.output = path.output, 
-                        all.wells = active.wells, 
+                        path.output = path.output,
                         x.grid = 10, y.grid = 10, 
                         dif.x = dif.x,
                         dif.y = dif.y,
