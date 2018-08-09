@@ -190,7 +190,7 @@ save.separate.well <- function(row.number, col.number, path.to.photos, z.range,
     }
     writeTIFFDefault(lista, paste(path.to.save, "Well ", well.list[[i]], '/', 
                                   channel, 
-                                  z.range[1], '-', tail(z.range, n=1) , 
+                                  sprintf("%02d", z.range[1]), '-', sprintf("%02d", tail(z.range, n=1)), 
                                   "_Z-stack_fish.tif", sep=''))
   }
 }
@@ -199,33 +199,39 @@ save.separate.well <- function(row.number, col.number, path.to.photos, z.range,
 #### variables ####
 
 # set paths to photos, mapplate, where photos should be save, to fiji app and where save merged photos
-path.to.photos <- "Z:/Pathway/RNA FISH/Experiments/KZ-FISH05-2018-07-11/"
-path.to.mapplate <- "Z:/Pathway/RNA FISH/karolina/platemap/2018-07-11-KZ-FISH05/metadata/"
+path.to.photos <- "E:/PT/RNA-FISH/analysis_raw/photos/2018-08-07-PT-FISH02/"
+path.to.mapplate <- "E:/PT/RNA-FISH/analysis_raw/platemap/2018-08-07-PT-FISH02/metadata/"
 normalizeMetadata(metadata_path = path.to.mapplate)
-path.to.save <- "Y:/PiotrT/RNA-FISH/images/"
-path.to.fiji <- "Y:/PiotrT/Fiji.app"
+path.to.save <- "E:/PT/RNA-FISH/analysis_FISH_output/2018-08-07-PT-FISH02/merged/"
+path.to.fiji <- "E:/PT/Fiji.app"
 path.to.output <- path.to.save # replace with path.to.save 
 
 # list of dyes used:
-channel.list <- list("A488_"="02","A546_"="01", "DAPI_"="00")
+# channel.list <- list("A488_"="02","A546_"="01", "DAPI_"="00")
+channel.list <- list("DAPI_"="00")
 
 # list of ranges to be used:
-z.ranges <- list((0:9), (10:19))
+z.ranges <- list((0:1), (2:3), (4:5), (6:7), (8:9), 
+                 (10:11), (12:13), (14:15), (16:17), (18:19))
+
+
 
 # beginning of the photo filename from leica
-basic.filename.leica <- "Mark_and_Find_003_Pos\\d{%d}_S001_z%02d_ch"
+basic.filename.leica <- "Mark_and_Find_001_Pos\\d{%d}_S001_z%02d_ch"
 
 # beginning of invoking command
 macro.invoke <- "ImageJ-win64.exe --console --headless -macro macro1PT_.ijm"
 
 # creating the REGEX part of file removing:
-z.ranges.regex <- paste("(", head(z.ranges[[1]], 1), "-", tail(z.ranges[[1]], 1), "|",
-                        head(z.ranges[[length(z.ranges)]], 1), "-", 
-                        tail(z.ranges[[length(z.ranges)]], 1), ")", sep='')
+range.to.regex <- function(range){
+  return(paste(sprintf("%02d", head(range, 1)), "-", sprintf("%02d", tail(range, 1)), sep=''))
+}
+
+z.ranges.regex <- paste("(", paste(lapply(z.ranges, range.to.regex), collapse="|"), ")", sep='')
 
 # creating a combination of z-slice's name for final file naming:
-new.range <- paste(z.ranges[[1]][1], 
-                   tail(z.ranges[[length(z.ranges)]], 1), 
+new.range <- paste(sprintf("%02d", z.ranges[[1]][1]), 
+                   sprintf("%02d", tail(z.ranges[[length(z.ranges)]], 1)), 
                    sep='-')
 
 ## command for fiji script ##
@@ -237,9 +243,7 @@ command.list[["app"]] <- macro.invoke
 command.list[["arguments"]][["input"]] <- gsub("/", "\\\\", path.to.save)
 command.list[["arguments"]][["output"]] <- gsub("/", "\\\\", path.to.output)
 command.list[["arguments"]][["dyes"]] <- paste(names(channel.list), collapse=',')
-command.list[["arguments"]][["ranges"]] <- paste(head(z.ranges[[1]], 1), "-", tail(z.ranges[[1]], 1), ",",
-                                                 head(z.ranges[[length(z.ranges)]], 1), "-", 
-                                                 tail(z.ranges[[length(z.ranges)]], 1), sep='')
+command.list[["arguments"]][["ranges"]] <- paste(lapply(z.ranges, range.to.regex), collapse=",")
 
 command <- paste(command.list[["app"]], paste(command.list[["arguments"]], collapse = ';'), sep=' ')
 
@@ -260,8 +264,8 @@ for(channel.tmp in names(channel.list)){
                            sep='')
   
   for(z in z.ranges){
-    save.separate.well(row.number = 10,
-                       col.number = 10,
+    save.separate.well(row.number = 15,
+                       col.number = 15,
                        path.to.photos = path.to.photos,
                        path.to.mapplate = path.to.mapplate,
                        path.to.save = path.to.save,
