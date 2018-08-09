@@ -24,7 +24,6 @@ normalizeMetadata <- function(metadata_path,
   }
 }
 
-
 which.wells <- function(file.path.active, file.path.wells){
   
   which.active <- function(file.path){
@@ -56,7 +55,6 @@ writeTIFFDefault <- function(what, where){
             bits.per.sample = 16,
             compression = "none")
 }
-
 
 merge.multiple.z <- function(row.number, col.number, path.to.photos, 
                              z.range, subs.well, file.pattern){
@@ -160,11 +158,10 @@ write.collapsed <- function(path.input,
                    where = paste(path.output, filename, sep="/"))
 }
 
-
-  
 save.separate.well <- function(row.number, col.number, path.to.photos, z.range, 
-                               active.input, no.cores, path.to.mapplate, path.to.save,
-                               file.pattern, channel, to.projection=0){
+                               active.input, no.cores, path.to.mapplate,
+                               path.to.save, file.pattern, channel, 
+                               to.projection = 1){
   
   well.list <- which.wells(paste(path.to.mapplate, "args_active.csv", sep=''), 
                            paste(path.to.mapplate, "args_id.csv", sep=''))
@@ -196,25 +193,57 @@ save.separate.well <- function(row.number, col.number, path.to.photos, z.range,
 }
 
 
+z.list <- function(total.z = 20, photos.number.after){
+  # foo to easily divide a range of z slices to list of ranges
+  # args : 
+  #   total.z: total number of z slices (usually 20)
+  #   photos.number.after: desired number of photos in one stack
+  if(total.z == 0){
+    return("no z slices?")
+  }
+  divider <- total.z / photos.number.after
+  pre_z.list <- foreach(i=(0:(divider))) %do% {
+    start <- i * photos.number.after
+    stop <- (start + photos.number.after - 1)
+    if(stop < total.z){
+      seq(start, stop, by=1)
+    } else if (start < total.z & stop >= total.z){
+      seq(start, (total.z - 1), by=1)
+    }
+  }
+  pre_z.list[sapply(pre_z.list, is.null)] <- NULL
+  return(pre_z.list)
+}
+
+range.to.regex <- function(range){
+  # foo to create a regex from list of z ranges for file removing 
+  return(paste(sprintf("%02d", head(range, 1)), "-", sprintf("%02d", tail(range, 1)), sep=''))
+}
+
 #### variables ####
 
-# set paths to photos, mapplate, where photos should be save, to fiji app and where save merged photos
-path.to.photos <- "E:/PT/RNA-FISH/analysis_raw/photos/2018-08-07-PT-FISH02/"
-path.to.mapplate <- "E:/PT/RNA-FISH/analysis_raw/platemap/2018-08-07-PT-FISH02/metadata/"
-normalizeMetadata(metadata_path = path.to.mapplate)
-path.to.save <- "E:/PT/RNA-FISH/analysis_FISH_output/2018-08-07-PT-FISH02/merged/"
-path.to.fiji <- "E:/PT/Fiji.app"
-path.to.output <- path.to.save # replace with path.to.save 
+# set paths to photos, mapplate, path where photos should be save, 
+# to fiji app and path where save merged photos
+path.to.photos <- 
+  "E:/PT/RNA-FISH/analysis_raw/photos/2018-08-07-PT-FISH02/"
+
+path.to.mapplate <- 
+  "E:/PT/RNA-FISH/analysis_raw/platemap/2018-08-07-PT-FISH02/metadata/"
+
+path.to.save <- 
+  "E:/PT/RNA-FISH/analysis_FISH_output/2018-08-07-PT-FISH02/merged/"
+
+path.to.fiji <- 
+  "E:/PT/Fiji.app"
+
+path.to.output <- 
+  path.to.save # replace with path.to.save 
 
 # list of dyes used:
-# channel.list <- list("A488_"="02","A546_"="01", "DAPI_"="00")
 channel.list <- list("DAPI_"="00")
 
 # list of ranges to be used:
-z.ranges <- list((0:1), (2:3), (4:5), (6:7), (8:9), 
-                 (10:11), (12:13), (14:15), (16:17), (18:19))
-
-
+z.ranges <- z.list(total.z = 20, photos.number.after = 2)
 
 # beginning of the photo filename from leica
 basic.filename.leica <- "Mark_and_Find_001_Pos\\d{%d}_S001_z%02d_ch"
@@ -222,92 +251,132 @@ basic.filename.leica <- "Mark_and_Find_001_Pos\\d{%d}_S001_z%02d_ch"
 # beginning of invoking command
 macro.invoke <- "ImageJ-win64.exe --console --headless -macro macro1PT_.ijm"
 
-# creating the REGEX part of file removing:
-range.to.regex <- function(range){
-  return(paste(sprintf("%02d", head(range, 1)), "-", sprintf("%02d", tail(range, 1)), sep=''))
-}
+#### final function to merge, collapse, make projection and remove photos ####
 
-z.ranges.regex <- paste("(", paste(lapply(z.ranges, range.to.regex), collapse="|"), ")", sep='')
-
-# creating a combination of z-slice's name for final file naming:
-new.range <- paste(sprintf("%02d", z.ranges[[1]][1]), 
-                   sprintf("%02d", tail(z.ranges[[length(z.ranges)]], 1)), 
-                   sep='-')
-
-## command for fiji script ##
-
-
-command.list <- list()
-command.list[["arguments"]] <- list()
-command.list[["app"]] <- macro.invoke
-command.list[["arguments"]][["input"]] <- gsub("/", "\\\\", path.to.save)
-command.list[["arguments"]][["output"]] <- gsub("/", "\\\\", path.to.output)
-command.list[["arguments"]][["dyes"]] <- paste(names(channel.list), collapse=',')
-command.list[["arguments"]][["ranges"]] <- paste(lapply(z.ranges, range.to.regex), collapse=",")
-
-command <- paste(command.list[["app"]], paste(command.list[["arguments"]], collapse = ';'), sep=' ')
-
-
-#### exact merging and file removing ####
-
-
-
-well.list <- which.wells(paste(path.to.mapplate, "args_active.csv", sep=''),
-                         paste(path.to.mapplate, "args_id.csv", sep=''))
-# well.list <- list("B02", "B03")
-
-for(channel.tmp in names(channel.list)){
-  # each channel has a unique file name 
-  pattern.channel <- paste(basic.filename.leica,
-                           channel.list[[channel.tmp]],
-                           ".tif",
-                           sep='')
+mcmr <- function(path.to.photos,
+                 path.to.mapplate,
+                 path.to.save,
+                 path.to.fiji,
+                 path.to.output = path.to.save,
+                 channel.list = list("A488_"="02","A546_"="01", "DAPI_"="00"),
+                 z.ranges,
+                 basic.filename.leica  = 
+                   "Mark_and_Find_001_Pos\\d{%d}_S001_z%02d_ch",
+                 macro.invoke =
+                   "ImageJ-win64.exe --console --headless -macro macro1PT_.ijm",
+                 row.number = 10,
+                 col.number = 10,
+                 to.projection = 1) {
   
-  for(z in z.ranges){
-    save.separate.well(row.number = 15,
-                       col.number = 15,
-                       path.to.photos = path.to.photos,
-                       path.to.mapplate = path.to.mapplate,
-                       path.to.save = path.to.save,
-                       z.range = z,
-                       no.cores = 1,
-                       channel = channel.tmp,
-                       file.pattern = pattern.channel,
-                       to.projection = 1)
-
+  normalizeMetadata(metadata_path = path.to.mapplate)
+  # creating the REGEX part of z ranges for file removing:
+  z.ranges.regex <- 
+    paste("(",
+          paste(lapply(z.ranges, range.to.regex), collapse="|"),
+          ")", sep='')
+  
+  # creating a combination of z-slice's name for final file naming:
+  new.range <- paste(sprintf("%02d", z.ranges[[1]][1]), 
+                     sprintf("%02d", tail(z.ranges[[length(z.ranges)]], 1)), 
+                     sep='-')
+  
+  ## command for fiji script ##
+  command.list <- list()
+  
+  command.list[["arguments"]] <- list()
+  
+  command.list[["app"]] <- macro.invoke
+  
+  command.list[["arguments"]][["input"]] <- 
+    gsub("/", "\\\\", path.to.save)
+  
+  command.list[["arguments"]][["output"]] <- 
+    gsub("/", "\\\\", path.to.output)
+  
+  command.list[["arguments"]][["dyes"]] <- 
+    paste(names(channel.list), collapse=',')
+  
+  command.list[["arguments"]][["ranges"]] <- 
+    paste(lapply(z.ranges, range.to.regex), collapse=",")
+  
+  command <- 
+    paste(command.list[["app"]], paste(command.list[["arguments"]], 
+                                       collapse = ';'), sep=' ')
+  
+  well.list <- which.wells(paste(path.to.mapplate, "args_active.csv", sep=''),
+                           paste(path.to.mapplate, "args_id.csv", sep=''))
+  
+  for(channel.tmp in names(channel.list)){
+    # each channel has a unique file name 
+    pattern.channel <- paste(basic.filename.leica,
+                             channel.list[[channel.tmp]],
+                             ".tif",
+                             sep='')
+    
+    for(z in z.ranges){
+      save.separate.well(row.number = row.number,
+                         col.number = row.number,
+                         path.to.photos = path.to.photos,
+                         path.to.mapplate = path.to.mapplate,
+                         path.to.save = path.to.save,
+                         z.range = z,
+                         no.cores = 1,
+                         channel = channel.tmp,
+                         file.pattern = pattern.channel,
+                         to.projection = to.projection)
+      
+    }
+    
+    foreach(folder=well.list) %do% {
+      
+      file.remove(list.files(paste(path.to.save, "Well ", folder, sep=""),
+                             pattern = paste("MAX_", 
+                                             channel.tmp, 
+                                             new.range, 
+                                             "_Z-stack_fish.tif", 
+                                             sep=''), 
+                             full.names = 1))
+      
+      write.collapsed(path.input = paste(path.to.save, "Well ", folder, 
+                                         sep=""),
+                      exp.pattern = paste("MAX_", 
+                                          channel.tmp, 
+                                          ".*_Z-stack_fish.tif", 
+                                          sep=''),
+                      collapsing='max',
+                      path.output = paste(path.to.save, 
+                                          "Well ", 
+                                          folder, 
+                                          sep=""),
+                      filename = paste("MAX_",
+                                       channel.tmp, 
+                                       new.range,
+                                       "_Z-stack_fish.tif",
+                                       sep=''))
+      
+      file.remove(list.files(paste(path.to.save, "Well ", folder, sep=""),
+                             pattern = paste("MAX_", 
+                                             channel.tmp, 
+                                             z.ranges.regex, 
+                                             "_Z-stack_fish.tif", 
+                                             sep=''), 
+                             full.names=1))
+    }
   }
+  
+  # invoke fiji script:
+  setwd(path.to.fiji)
+  system(command)
   
   foreach(folder=well.list) %do% {
-
     file.remove(list.files(paste(path.to.save, "Well ", folder, sep=""),
-               pattern = paste("MAX_", channel.tmp, new.range, "_Z-stack_fish.tif", sep=''), 
-               full.names = 1))
-    
-    write.collapsed(path.input = paste(path.to.save, "Well ", folder, sep=""),
-                    exp.pattern = paste("MAX_", channel.tmp, ".*_Z-stack_fish.tif", sep=''),
-                    collapsing='max',
-                    path.output = paste(path.to.save, "Well ", folder, sep=""),
-                    filename = paste("MAX_",
-                                     channel.tmp, 
-                                     new.range,
-                                     "_Z-stack_fish.tif",
-                                     sep=''))
-    
-    file.remove(list.files(paste(path.to.save, "Well ", folder, sep=""),
-                           pattern = paste("MAX_", channel.tmp, z.ranges.regex, "_Z-stack_fish.tif", sep=''), 
-                           full.names=1))
+                           pattern = paste("(", 
+                                           paste(names(channel.list), 
+                                                 collapse = "|"),
+                                           ")", 
+                                           z.ranges.regex, 
+                                           "_Z-stack_fish.tif", sep=''),
+                           full.names = 1))
   }
-  
-}
-
-# invoke fiji script:
-setwd(path.to.fiji)
-system(command)
-
-foreach(folder=well.list) %do% {
-file.remove(list.files(paste(path.to.save, "Well ", folder, sep=""),
-                       pattern = paste("(", paste(names(channel.list), collapse = "|"),
-                                       ")", z.ranges.regex, "_Z-stack_fish.tif", sep=''),
-                       full.names = 1))
 }
 
