@@ -6,10 +6,8 @@ packages.list <- list("foreach", "doParallel")
 sapply(packages.list, require, character.only = TRUE)
 
 #### loading functions ####
-## function for preparing names for wells ##
 
-normalizeMetadata <- function(metadata_path, 
-                              delimeter = ","){
+normalizeMetadata <- function(metadata_path, delimeter = ","){
   csv.list <- list.files(path = metadata_path, pattern = ".csv", 
                          recursive = TRUE, full.names = TRUE)
   
@@ -33,6 +31,7 @@ normalizeMetadata <- function(metadata_path,
 }
 
 which.coor <- function(file.path.active, file.path.middle, file.path.z){
+  ## function for preparing names for wells ##
   
   which.active <- function(file.path){
     mapplate <- read.csv(file.path, header = FALSE, sep=',')
@@ -46,8 +45,6 @@ which.coor <- function(file.path.active, file.path.middle, file.path.z){
     }
     return(yes)
   }
-  
-  
   
   yes <- which.active(file.path.active)
   middle <- read.csv(file.path.middle, header = FALSE, sep=',')
@@ -68,10 +65,10 @@ which.coor <- function(file.path.active, file.path.middle, file.path.z){
   return(all.wells)
 }
 
-## final function for preparing the file ##
 prepare.maf.file.middle <- function(path.input, path.output, 
                              all.wells= NA, x.grid, y.grid, 
                              dif.x, dif.y, afc){
+  ## final function for preparing the file ##
   if(is.na(all.wells)){
     all.wells <- which.coor(paste(path.input, "args_active.csv", sep=''),
                                paste(path.input, "plate_middle.csv", sep=''),
@@ -163,7 +160,6 @@ path.output <-
 dif.x <- 0.00011405 #has to be this exact value for 100x objective
 dif.y <- 0.00011220 #has to be this exact value for 100x objective
 afc <- 0
-
 
 normalizeMetadata(metadata_path = path.to.platemap)
 
