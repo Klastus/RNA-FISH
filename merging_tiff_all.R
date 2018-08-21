@@ -7,7 +7,10 @@ sapply(packages.list, require, character.only = TRUE)
 #### working functions ####
 normalizeMetadata <- function(metadata_path, 
                               delimeter = ","){
-  csv.list <- list.files(path = metadata_path, pattern = ".csv", recursive = TRUE, full.names = TRUE)
+  csv.list <- list.files(path = metadata_path,
+                         pattern = ".csv", 
+                         recursive = TRUE, 
+                         full.names = TRUE)
   
   for(csv in csv.list){
     line <- readLines(csv, n = 1)
@@ -20,7 +23,8 @@ normalizeMetadata <- function(metadata_path,
     } else {
       csv.data <- read.table(file = csv, header = FALSE, sep = " ")
     }
-    write.table(csv.data, file = csv, sep = delimeter, row.names = FALSE, col.names = FALSE)
+    write.table(csv.data, file = csv, sep = delimeter, 
+                row.names = FALSE, col.names = FALSE)
   }
 }
 
@@ -96,11 +100,16 @@ merge.multiple.z <- function(row.number, col.number, path.to.photos,
   # registerDoParallel(no.cores)
   image.list <- foreach(z=(z.range), .packages = "tiff") %do% {
     for(no.of.digits in c(3, 4, 5)){
-      tiff.sublist[[no.of.digits]] <-  list.files(path = path.to.photos,
-                                               pattern = sprintf(file.pattern, no.of.digits, z))
+      tiff.sublist[[no.of.digits]] <-  
+        list.files(path = path.to.photos,
+                   pattern = sprintf(file.pattern, no.of.digits, z))
     }
-    tiff.list <- do.call(c, tiff.sublist)[(((subs.well-1)*tiles.no)+1):(tiles.no*subs.well)]
-    merge.one.z(tiff.list, row.number = row.number, col.number = col.number, path.to.photos)
+    tiff.list <- do.call(c, tiff.sublist)[
+      (((subs.well-1)*tiles.no)+1):(tiles.no*subs.well)
+      ]
+    merge.one.z(tiff.list, 
+                row.number = row.number, 
+                col.number = col.number, path.to.photos)
   }
   # stopImplicitCluster()
   return(image.list)
@@ -123,7 +132,9 @@ getCollapseImageMatrix <- function(
       function(image.matrix){image.matrix/length(images.list)}
   } else if(collapsing=="max"){
     collapse.function <-
-      function(image.matrix.1, image.matrix.2){pmax(image.matrix.1,image.matrix.2)}
+      function(image.matrix.1, image.matrix.2){
+        pmax(image.matrix.1,image.matrix.2)
+        }
     normalise.function =
       function(image.matrix){image.matrix}
   } else {stop("bad collapse method")}
@@ -144,7 +155,8 @@ write.collapsed <- function(path.input,
   
   tiff.matrix.list <-
     foreach::foreach(tiff.filename = tiffs.list) %do% {
-      tiff.matrix <- readTIFF(source = paste(path.input, tiff.filename, sep = "/"))
+      tiff.matrix <- readTIFF(source = 
+                                paste(path.input, tiff.filename, sep = "/"))
     }
   
   tiff.matrix <- getCollapseImageMatrix(images.list = tiff.matrix.list,
@@ -182,12 +194,16 @@ save.separate.well <- function(row.number, col.number, path.to.photos, z.range,
                        where = paste(path.to.save, "Well ", well.list[[i]], '/', 
                                      "MAX_",
                                      channel, 
-                                     z.range[1], '-', tail(z.range, n=1),
+                                     sprintf("%02d", z.range[1]),
+                                     '-', 
+                                     sprintf("%02d", tail(z.range, n=1)), 
                                      "_Z-stack_fish.tif", sep=''))
     }
     writeTIFFDefault(lista, paste(path.to.save, "Well ", well.list[[i]], '/', 
                                   channel, 
-                                  sprintf("%02d", z.range[1]), '-', sprintf("%02d", tail(z.range, n=1)), 
+                                  sprintf("%02d", z.range[1]),
+                                  '-', 
+                                  sprintf("%02d", tail(z.range, n=1)), 
                                   "_Z-stack_fish.tif", sep=''))
   }
 }
@@ -217,43 +233,14 @@ z.list <- function(total.z = 20, photos.number.after){
 
 range.to.regex <- function(range){
   # foo to create a regex from list of z ranges for file removing 
-  return(paste(sprintf("%02d", head(range, 1)), "-", sprintf("%02d", tail(range, 1)), sep=''))
+  return(paste(sprintf("%02d", head(range, 1)), 
+               "-", 
+               sprintf("%02d", tail(range, 1)), sep=''))
 }
 
-#### variables ####
-
-# set paths to photos, mapplate, path where photos should be save, 
-# to fiji app and path where save merged photos
-path.to.photos <- 
-  "E:/PT/RNA-FISH/analysis_raw/photos/2018-08-07-PT-FISH02/"
-
-path.to.mapplate <- 
-  "E:/PT/RNA-FISH/analysis_raw/platemap/2018-08-07-PT-FISH02/metadata/"
-
-path.to.save <- 
-  "E:/PT/RNA-FISH/analysis_FISH_output/2018-08-07-PT-FISH02/merged/"
-
-path.to.fiji <- 
-  "E:/PT/Fiji.app"
-
-path.to.output <- 
-  path.to.save # replace with path.to.save 
-
-# list of dyes used:
-channel.list <- list("DAPI_"="00")
-
-# list of ranges to be used:
-z.ranges <- z.list(total.z = 20, photos.number.after = 2)
-
-# beginning of the photo filename from leica
-basic.filename.leica <- "Mark_and_Find_001_Pos\\d{%d}_S001_z%02d_ch"
-
-# beginning of invoking command
-macro.invoke <- "ImageJ-win64.exe --console --headless -macro macro1PT_.ijm"
 
 #### final function to merge, collapse, make projection and remove photos ####
-
-mcmr <- function(path.to.photos,
+mcpr <- function(path.to.photos,
                  path.to.mapplate,
                  path.to.save,
                  path.to.fiji,
@@ -267,6 +254,7 @@ mcmr <- function(path.to.photos,
                  row.number = 10,
                  col.number = 10,
                  to.projection = 1) {
+  # Merge, Collapse, make Projection and Remove photos
   
   normalizeMetadata(metadata_path = path.to.mapplate)
   # creating the REGEX part of z ranges for file removing:
@@ -326,33 +314,36 @@ mcmr <- function(path.to.photos,
                          to.projection = to.projection)
       
     }
-    
-    foreach(folder=well.list) %do% {
+    if(to.projection == 1){
+    foreach(folder = well.list) %do% {
+      # first remove all  finished photos from any previous computations
+      file.remove(
+        list.files(paste(path.to.save, "Well ", folder, sep=""),
+                   pattern = paste("MAX_", 
+                                   channel.tmp, 
+                                   new.range, 
+                                   "_Z-stack_fish.tif", 
+                                   sep=''), 
+                   full.names = 1)
+      )
       
-      file.remove(list.files(paste(path.to.save, "Well ", folder, sep=""),
-                             pattern = paste("MAX_", 
-                                             channel.tmp, 
-                                             new.range, 
-                                             "_Z-stack_fish.tif", 
-                                             sep=''), 
-                             full.names = 1))
-      
-      write.collapsed(path.input = paste(path.to.save, "Well ", folder, 
-                                         sep=""),
-                      exp.pattern = paste("MAX_", 
-                                          channel.tmp, 
-                                          ".*_Z-stack_fish.tif", 
-                                          sep=''),
-                      collapsing='max',
-                      path.output = paste(path.to.save, 
-                                          "Well ", 
-                                          folder, 
-                                          sep=""),
-                      filename = paste("MAX_",
-                                       channel.tmp, 
-                                       new.range,
-                                       "_Z-stack_fish.tif",
-                                       sep=''))
+      write.collapsed(
+        path.input = paste(path.to.save, "Well ", folder, sep=""),
+        exp.pattern = paste("MAX_", 
+                            channel.tmp, 
+                            ".*_Z-stack_fish.tif", 
+                            sep=''),
+        collapsing='max',
+        path.output = paste(path.to.save, 
+                            "Well ", 
+                            folder, 
+                            sep=""),
+        filename = paste("MAX_",
+                         channel.tmp, 
+                         new.range,
+                         "_Z-stack_fish.tif",
+                         sep='')
+      )
       
       file.remove(list.files(paste(path.to.save, "Well ", folder, sep=""),
                              pattern = paste("MAX_", 
@@ -361,6 +352,7 @@ mcmr <- function(path.to.photos,
                                              "_Z-stack_fish.tif", 
                                              sep=''), 
                              full.names=1))
+    } 
     }
   }
   
@@ -379,4 +371,48 @@ mcmr <- function(path.to.photos,
                            full.names = 1))
   }
 }
+
+#### variables ####
+
+# set paths to photos, mapplate, path where photos should be save, 
+# to fiji app and path where save merged photos
+path.to.photos <- 
+  "E:/PT/RNA-FISH/analysis_raw/photos/2018-08-07-PT-FISH02/"
+
+path.to.mapplate <- 
+  "E:/PT/RNA-FISH/analysis_raw/platemap/2018-08-07-PT-FISH02/metadata/"
+
+path.to.save <- 
+  "E:/PT/RNA-FISH/analysis_FISH_output/2018-08-07-PT-FISH02/merged/"
+
+path.to.fiji <- 
+  "E:/PT/Fiji.app"
+
+# list of dyes used:
+channel.list <- list("DAPI_"="00")
+
+# list of ranges to be used:
+z.ranges <- z.list(total.z = 20, photos.number.after = 2)
+
+# beginning of the photo filename from leica
+basic.filename.leica <- "Mark_and_Find_001_Pos\\d{%d}_S001_z%02d_ch"
+
+# beginning of invoking command
+macro.invoke <- "ImageJ-win64.exe --console --headless -macro macro1PT_.ijm"
+
+
+#### final call of mcpr function ####
+mcpr(path.to.photos = path.to.photos,
+     path.to.mapplate = path.to.mapplate,
+     path.to.save = path.to.save,
+     path.to.fiji = path.to.fiji,
+     channel.list = channel.list,
+     z.ranges = z.ranges,
+     basic.filename.leica = basic.filename.leica,
+     macro.invoke = macro.invoke,
+     row.number = 15,
+     col.number = 15,
+     to.projection = 1)
+
+
 

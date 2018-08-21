@@ -76,7 +76,7 @@ for( dir=0; dir < DirList.length; dir++){
 		for( image=0; image < MatchedFiles.length; image++){
 			open(input + DirList[dir] + '/' + MatchedFiles[image]);
 		}
-		WorkingTitle = DyeList[dye] + "_" + NewRange + "_Z-stack_fish.tiff";
+		WorkingTitle = DyeList[dye] + NewRange + "_Z-stack_fish.tiff";
 		ConcCommand = "all_open title = " + WorkingTitle;
 		run("Concatenate...", ConcCommand);
 		OutputPath = output + DirList[dir] + WorkingTitle;
