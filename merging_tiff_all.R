@@ -175,6 +175,8 @@ save.separate.well <- function(row.number, col.number, path.to.photos, z.range,
                                path.to.save, file.pattern, channel, 
                                to.projection = 1){
   
+
+  
   well.list <- which.wells(paste(path.to.mapplate, "args_active.csv", sep=''), 
                            paste(path.to.mapplate, "args_id.csv", sep=''))
   
@@ -250,7 +252,7 @@ mcpr <- function(path.to.photos,
                  basic.filename.leica  = 
                    "Mark_and_Find_001_Pos\\d{%d}_S001_z%02d_ch",
                  macro.invoke =
-                   "ImageJ-win64.exe --console --headless -macro macro1PT_.ijm",
+                   "ImageJ-win64.exe --console --headless -macro merge_large_tiff_.ijm",
                  row.number = 10,
                  col.number = 10,
                  to.projection = 1) {
@@ -293,6 +295,10 @@ mcpr <- function(path.to.photos,
   
   well.list <- which.wells(paste(path.to.mapplate, "args_active.csv", sep=''),
                            paste(path.to.mapplate, "args_id.csv", sep=''))
+  
+  if(!dir.exists(paste(path.to.save))){
+    dir.create(paste(path.to.save), recursive = TRUE)
+  }
   
   for(channel.tmp in names(channel.list)){
     # each channel has a unique file name 
@@ -377,13 +383,13 @@ mcpr <- function(path.to.photos,
 # set paths to photos, mapplate, path where photos should be save, 
 # to fiji app and path where save merged photos
 path.to.photos <- 
-  "E:/PT/RNA-FISH/analysis_raw/photos/2018-08-07-PT-FISH02/"
+  "E:/PT/RNA-FISH/analysis_raw/photos/2018-08-21-PT-FISH03/"
 
 path.to.mapplate <- 
-  "E:/PT/RNA-FISH/analysis_raw/platemap/2018-08-07-PT-FISH02/metadata/"
+  "E:/PT/RNA-FISH/analysis_raw/platemap/2018-08-21-PT-FISH03/metadata/"
 
 path.to.save <- 
-  "E:/PT/RNA-FISH/analysis_FISH_output/2018-08-07-PT-FISH02/merged/"
+  "E:/PT/RNA-FISH/analysis_FISH_output/2018-08-21-PT-FISH03/"
 
 path.to.fiji <- 
   "E:/PT/Fiji.app"
@@ -392,13 +398,13 @@ path.to.fiji <-
 channel.list <- list("DAPI_"="00")
 
 # list of ranges to be used:
-z.ranges <- z.list(total.z = 20, photos.number.after = 2)
+z.ranges <- z.list(total.z = 30, photos.number.after = 5)
 
 # beginning of the photo filename from leica
-basic.filename.leica <- "Mark_and_Find_001_Pos\\d{%d}_S001_z%02d_ch"
+basic.filename.leica <- "Mark_and_Find_003_Pos\\d{%d}_S001_z%02d_ch"
 
 # beginning of invoking command
-macro.invoke <- "ImageJ-win64.exe --console --headless -macro macro1PT_.ijm"
+macro.invoke <- "ImageJ-win64.exe --console --headless -macro merge_large_tiff_.ijm"
 
 
 #### final call of mcpr function ####
@@ -410,9 +416,10 @@ mcpr(path.to.photos = path.to.photos,
      z.ranges = z.ranges,
      basic.filename.leica = basic.filename.leica,
      macro.invoke = macro.invoke,
-     row.number = 15,
-     col.number = 15,
+     row.number = 10,
+     col.number = 10,
      to.projection = 1)
+
 
 
 
