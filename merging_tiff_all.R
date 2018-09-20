@@ -60,11 +60,18 @@ writeTIFFDefault <- function(what, where){
             compression = "none")
 }
 
-merge.multiple.z <- function(row.number, col.number, path.to.photos, 
-                             z.range, subs.well, file.pattern){
+merge.multiple.z <- function(row.number, 
+                             col.number, 
+                             path.to.photos, 
+                             z.range, 
+                             subs.well, 
+                             file.pattern){
   
   
-  merge.one.z <- function(tiff.list, row.number, col.number, path.to.photos){
+  merge.one.z <- function(tiff.list, 
+                          row.number, 
+                          col.number,
+                          path.to.photos){
     row.number.tmp <- 1
     col.number.tmp <- 0
     matrix.biggest <- matrix()
@@ -181,9 +188,12 @@ save.separate.well <- function(row.number, col.number, path.to.photos, z.range,
                            paste(path.to.mapplate, "args_id.csv", sep=''))
   
   for(i in 1:length(well.list)){
-    lista <- merge.multiple.z(row.number=row.number, col.number=col.number, 
-                              path.to.photos=path.to.photos, z.range=z.range, 
-                              subs.well = i, file.pattern = file.pattern)
+    lista <- merge.multiple.z(row.number = row.number, 
+                              col.number = col.number, 
+                              path.to.photos = path.to.photos,
+                              z.range = z.range, 
+                              subs.well = i,
+                              file.pattern = file.pattern)
     if(!dir.exists(paste(path.to.save, "Well ", well.list[[i]], sep=''))){
       dir.create(paste(path.to.save, "Well ", well.list[[i]], sep=''))
     }
@@ -309,7 +319,7 @@ mcpr <- function(path.to.photos,
     
     for(z in z.ranges){
       save.separate.well(row.number = row.number,
-                         col.number = row.number,
+                         col.number = col.number,
                          path.to.photos = path.to.photos,
                          path.to.mapplate = path.to.mapplate,
                          path.to.save = path.to.save,
