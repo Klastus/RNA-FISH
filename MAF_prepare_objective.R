@@ -170,10 +170,18 @@ prepare.maf.file.middle <- function(path.input, path.output,
                                     filename.z = "fish_z_begin.csv",
                                     all.wells= NA, 
                                     x.grid, y.grid, 
-                                    dif.x = 0.00011405,
-                                    dif.y = 0.00011220, 
+                                    objective,
                                     afc = 0, 
                                     middle = TRUE){
+  if(objective == "100x"){
+  dif.x = 0.00011405
+  dif.y = 0.00011220 
+  } else if (objective == "40x") {
+    dif.x = 0.0002815
+    dif.y = 0.0002838
+  } else {
+    return("wrong objective!")
+    }
   
   normalizeMetadata(metadata_path = path.input)
   ## final function for preparing the file ##
@@ -265,12 +273,13 @@ prepare.maf.file.middle <- function(path.input, path.output,
 
 
 #### start whole procedure ####
-path <- paste("/Volumes/Experiments/Pathway/RNA_FISH/karolina", 
-              "/platemap/2018-08-23-KZ-FISH08/metadata/", sep = '')
+path <- paste("/Volumes/Experiments-3/Pathway/RNA_FISH/piotrek", 
+              "/platemap/adjusting 40x merging/", sep = '')
 
 prepare.maf.file.middle(path.input = path, 
                         path.output = paste(path, "MAF_begin.maf", sep = ''),
                         filename.middle = "plate_middle_begin.csv",
+                        objective = "40x",
                         x.grid = 1, y.grid = 1, 
                         middle = TRUE)
 
@@ -287,5 +296,6 @@ prepare.maf.file.middle(path.input = path,
                         filename.middle = "plate_middle_end.csv",
                         filename.z = "fish_z_end.csv",
                         path.output = paste(path, "/MAF_end.maf", sep= ''),
-                        x.grid = 10, y.grid = 10,
+                        x.grid = 5, y.grid = 5,
+                        objective = "40x",
                         middle = TRUE)

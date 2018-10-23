@@ -280,29 +280,6 @@ mcpr <- function(path.to.photos,
                      sprintf("%02d", tail(z.ranges[[length(z.ranges)]], 1)), 
                      sep='-')
   
-  ## command for fiji script ##
-  command.list <- list()
-  
-  command.list[["arguments"]] <- list()
-  
-  command.list[["app"]] <- macro.invoke
-  
-  command.list[["arguments"]][["input"]] <- 
-    gsub("/", "\\\\", path.to.save)
-  
-  command.list[["arguments"]][["output"]] <- 
-    gsub("/", "\\\\", path.to.output)
-  
-  command.list[["arguments"]][["dyes"]] <- 
-    paste(names(channel.list), collapse=',')
-  
-  command.list[["arguments"]][["ranges"]] <- 
-    paste(lapply(z.ranges, range.to.regex), collapse=",")
-  
-  command <- 
-    paste(command.list[["app"]], paste(command.list[["arguments"]], 
-                                       collapse = ';'), sep=' ')
-  
   well.list <- which.wells(paste(path.to.mapplate, "args_active.csv", sep=''),
                            paste(path.to.mapplate, "args_id.csv", sep=''))
   
@@ -374,9 +351,30 @@ mcpr <- function(path.to.photos,
   
   # invoke fiji script:
   setwd(path.to.fiji)
-  system(command)
+  ## command for fiji script ##
+  command.list <- list()
+  command.list[["arguments"]] <- list()
+  command.list[["app"]] <- macro.invoke
+  
   
   foreach(folder=well.list) %do% {
+    # first create a path variable to well folder with photos 
+    # as input and output path
+    command.list[["arguments"]][["input"]] <- 
+      gsub("/", "\\\\", paste(path.to.save, "Well ", folder, "/", sep = ''))
+    command.list[["arguments"]][["output"]] <- 
+      gsub("/", "\\\\", paste(path.to.output, "Well ", folder, "/", sep = ''))
+    command.list[["arguments"]][["dyes"]] <- 
+      paste(names(channel.list), collapse=',')
+    command.list[["arguments"]][["ranges"]] <- 
+      paste(lapply(z.ranges, range.to.regex), collapse=",")
+    # combine all arguments specific for one well directory
+    command <- 
+      paste(command.list[["app"]], ' "',
+            paste(command.list[["arguments"]], collapse = ';'), '"', sep='')
+    # invoke Fiji
+    system(command)
+    # remove mini-zstack files (e.g. "A488_00-05.tiff")
     file.remove(list.files(paste(path.to.save, "Well ", folder, sep=""),
                            pattern = paste("(", 
                                            paste(names(channel.list), 
@@ -392,23 +390,23 @@ mcpr <- function(path.to.photos,
 
 # set paths to photos, mapplate, path where photos should be save, 
 # to fiji app and path where save merged photos
-path.to.photos <- 
-  "E:/PT/RNA-FISH/analysis_raw/photos/2018-08-21-PT-FISH03/"
+# path.to.photos <- 
+#   "E:/PT/RNA-FISH/analysis_raw/photos/2018-08-21-PT-FISH03/"
 
 path.to.mapplate <- 
-  "E:/PT/RNA-FISH/analysis_raw/platemap/2018-08-21-PT-FISH03/metadata/"
+  "E:/PT/RNA-FISH/analysis_FISH_output/PTtest/metadata/"
 
 path.to.save <- 
-  "E:/PT/RNA-FISH/analysis_FISH_output/2018-08-21-PT-FISH03/"
+  "E:/PT/RNA-FISH/analysis_FISH_output/PTtest/images/"
 
 path.to.fiji <- 
   "E:/PT/Fiji.app"
 
 # list of dyes used:
-channel.list <- list("DAPI_"="00")
+channel.list <- list("DAPI_"="00", "A488_"="01")
 
 # list of ranges to be used:
-z.ranges <- z.list(total.z = 30, photos.number.after = 5)
+z.ranges <- z.list(total.z = 30, photos.number.after = 10)
 
 # beginning of the photo filename from leica
 basic.filename.leica <- "Mark_and_Find_003_Pos\\d{%d}_S001_z%02d_ch"
