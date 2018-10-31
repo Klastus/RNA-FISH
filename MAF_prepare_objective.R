@@ -175,10 +175,13 @@ prepare.maf.file.middle <- function(path.input, path.output,
                                     middle = TRUE){
   if(objective == "100x"){
   dif.x = 0.00011405
-  dif.y = 0.00011220 
+  dif.y = 0.00011220
   } else if (objective == "40x") {
     dif.x = 0.0002815
     dif.y = 0.0002838
+  } else if (objective == "63x"){
+    dif.x = 0.0001852564
+    dif.y = 0.00018
   } else {
     return("wrong objective!")
     }
@@ -274,12 +277,12 @@ prepare.maf.file.middle <- function(path.input, path.output,
 
 #### start whole procedure ####
 path <- paste("/Volumes/Experiments-3/Pathway/RNA_FISH/piotrek", 
-              "/platemap/adjusting 40x merging/", sep = '')
+              "/platemap/adjusting 63x merging/", sep = '')
 
 prepare.maf.file.middle(path.input = path, 
                         path.output = paste(path, "MAF_begin.maf", sep = ''),
                         filename.middle = "plate_middle_begin.csv",
-                        objective = "40x",
+                        objective = "63x",
                         x.grid = 1, y.grid = 1, 
                         middle = TRUE)
 
@@ -297,5 +300,5 @@ prepare.maf.file.middle(path.input = path,
                         filename.z = "fish_z_end.csv",
                         path.output = paste(path, "/MAF_end.maf", sep= ''),
                         x.grid = 5, y.grid = 5,
-                        objective = "40x",
+                        objective = "63x",
                         middle = TRUE)
